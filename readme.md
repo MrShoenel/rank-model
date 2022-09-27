@@ -58,34 +58,36 @@ $$
 \end{aligned}
 $$
 
-This way, all the weights related to *k*<sub>*i*</sub> are shared. An
-alternative would be to use a complete own set of weights for each
-output, which will essentially result in an extra model for each output.
-This is not what we will do, because if this were the purpose, one would
-simply create separate models instead.
+This way, all the weights related to *k*<sub>*i*</sub> are shared. Note
+how add an additional weight here that will allow an individual scale
+and translate for each response variable. This is not necessary in the
+single-feature case An alternative would be to use a complete own set of
+weights for each output, which will essentially result in an extra model
+for each output. This is not what we will do, because if this were the
+purpose, one would simply create separate models instead.
 
-It is obvious that this model is somewhat similar to a *Generalized
-Linear Model* (GLM). However, here are some differences:
+It is obvious that this model is somewhat similar to a **Generalized
+Linear Model** (GLM). However, here are some differences:
 
 -   For each feature in the training data, we estimate a corresponding
     CDF. This could be an ECDF or a fitted parametric distribution. As
     of writing this, we support the ECDF, an interpolated and smoothed
     version of it, as well as Gauss- and Logistic distributions. Next,
     we will implement distribution fitting.
--   We introduce *non-linearity* by wrapping each rank-transformed
-    feature using an additional *activation*, very similar to how neural
-    networks do it. Before passing the dot-product to the activation, we
-    also apply a linear transformation to allow the transformed feature
-    to change its location and scale. We also add an additional weight
-    to for each such activation.
--   The *link*-function used in GLMs is the inverse CDF (PPF) of the
-    response variable. We have the same options as for the features
-    (ECDF, parametric, etc.).
+-   We introduce **non-linearity** by wrapping each rank-transformed
+    feature using an additional **activation**, very similar to how
+    neural networks do it. Before passing the dot-product to the
+    activation, we also apply a linear transformation to allow the
+    transformed feature to change its location and scale. We also add an
+    additional weight for each such activation.
+-   The **link**-function used in GLMs often is a `logit`. Here we
+    always use the inverse CDF (PPF) of the response variable. We have
+    the same options as for the features (ECDF, parametric, etc.).
 -   Since the link-function is a PPF, it has a domain of \[0,1\]. We
     therefore pass the result of the computation into a somewhat
-    hardened Sigmoid, that, in actuality, is more like a ReLU with
-    domain \[0,1\] and is continuously smooth in the neighborhoods of
-    *x* = {0, 1} to allow smooth gradients (currently, we obtain a
+    hardened Sigmoid, that, in actuality, is more like a ReLU with range
+    \[0,1\] and is continuously smooth in the neighborhoods of
+    *x* = {0, 1} to enable smooth gradients (currently, we obtain a
     numeric gradient, so this is of great importance). Also, we pass the
     result with one last additional parameter, a “model-bias”
     *b*<sub>*m*</sub>.
