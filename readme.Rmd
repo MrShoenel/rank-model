@@ -40,7 +40,7 @@ $$
 	&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\left[\sum_{i=1}^N\,w_i\times\mathsf{Swish}\left(a_i+b_i\times F_{X_i}(x_i)\right)\right]\right)\right),
 	\\[0ex]
 	&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\mathbf{w}^\top\mathbf{k}\right)\right),
-	\\[1ex]
+	\\[0ex]
 	&\qquad\text{where}\;k_i=\mathsf{Swish}\left(a_i+b_i\times F_{X_i}\left(x_i\right)\right).
 \end{aligned}
 $$
