@@ -70,7 +70,11 @@ It is obvious that this model is somewhat similar to a **Generalized Linear Mode
 * For each feature in the training data, we estimate a corresponding CDF. This could be an ECDF or a fitted parametric distribution. As of writing this, we support the ECDF, an interpolated and smoothed version of it, as well as Gauss- and Logistic distributions. Next, we will implement distribution fitting.
 * We introduce **non-linearity** by wrapping each rank-transformed feature using an additional **activation**, very similar to how neural networks do it. Before passing the dot-product to the activation, we also apply a linear transformation to allow the transformed feature to change its location and scale. We also add an additional weight for each such activation.
 * The **link**-function used in GLMs often is a `logit`. Here we always use the inverse CDF (PPF) of the response variable. We have the same options as for the features (ECDF, parametric, etc.).
-* Since the link-function is a PPF, it has a domain of $[0,1]$. We therefore pass the result of the computation into a somewhat hardened Sigmoid, that, in actuality, is more like a ReLU with range $[0,1]$ and is continuously smooth in the neighborhoods of $x=\{0,1\}$ to enable smooth gradients (currently, we obtain a numeric gradient, so this is of great importance). Also, we pass the result with one last additional parameter, a "model-bias" $b_m$.
+* Since the link-function is a PPF, it has a domain of $[0,1]$. We therefore pass the result of the computation into a somewhat hardened Sigmoid, that, in actuality, is more like a ReLU with range $[0,1]$ and is continuously smooth in the neighborhoods of $x=\{0,1\}$ to enable smooth gradients (currently, we obtain a numeric gradient, so this is of great importance) [@Biswas_2022_CVPR]. Also, we pass the result with one last additional parameter, a "model-bias" $b_m$.
 
+
+# References {-}
+
+<div id="refs"></div>
 
 

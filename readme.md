@@ -86,6 +86,22 @@ Linear Model** (GLM). However, here are some differences:
     hardened Sigmoid, that, in actuality, is more like a ReLU with range
     \[0,1\] and is continuously smooth in the neighborhoods of
     *x* = {0, 1} to enable smooth gradients (currently, we obtain a
-    numeric gradient, so this is of great importance). Also, we pass the
-    result with one last additional parameter, a “model-bias”
-    *b*<sub>*m*</sub>.
+    numeric gradient, so this is of great importance) (Biswas et al.
+    2022). Also, we pass the result with one last additional parameter,
+    a “model-bias” *b*<sub>*m*</sub>.
+
+# References
+
+<div id="refs" class="references csl-bib-body hanging-indent">
+
+<div id="ref-Biswas_2022_CVPR" class="csl-entry">
+
+Biswas, Koushik, Sandeep Kumar, Shilpak Banerjee, and Ashish Kumar
+Pandey. 2022. “Smooth Maximum Unit: Smooth Activation Function for Deep
+Networks Using Smoothing Maximum Technique.” In *Proceedings of the
+IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*,
+794–803.
+
+</div>
+
+</div>
