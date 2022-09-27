@@ -51,9 +51,13 @@ make_smooth_ecdf <- function(values, slope = 0.025, inverse = FALSE) {
 }
 
 
-create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis", "ecdf", "smooth")) {
+create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis", "ecdf", "smooth", "fit")) {
 	df_train <- as.data.frame(df_train)
 	cdf_type <- match.arg(cdf_type)
+	
+	model_info <- list(
+		"distr" = list()
+	)
 	
 	make_gauss_cdf <- function(data) {
 		mean_ <- mean(data)
@@ -98,9 +102,29 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis",
 			cdfs[[x_col]] <- make_smooth_ecdf(values = df_train[, x_col])
 		}
 		ppf <- make_smooth_ecdf(values = df_train[, y_col], inverse = TRUE)
+	} else if (cdf_type == "fit") {
+		for (x_col in x_cols) {
+			the_fit <- fit_cont_parametric(data = df_train[, x_col], over_scale = .1)
+			model_info$distr[[x_col]] <- list(
+				"distr" = the_fit$distr,
+				"dist_params" = the_fit$dist_params,
+				"p_value" = the_fit$p_value,
+				"statistic" = the_fit$statistic
+			)
+			cdfs[[x_col]] <- the_fit$cdf
+		}
+		the_fit <- fit_cont_parametric(data = df_train[, y_col], over_scale = .1)
+		model_info$distr[[y_col]] <- list(
+			"distr" = the_fit$distr,
+			"dist_params" = the_fit$dist_params,
+			"p_value" = the_fit$p_value,
+			"statistic" = the_fit$statistic
+		)
+		ppf_ <- the_fit$ppf
+		ppf <- make_safe_ppf(ppf = ppf_)
 	}
 	
-	function(x, df) {
+	m <- function(x, df) {
 		a_m <- x[1]
 		b_m <- x[2] # Model output bias for Sigmoid
 		# For each feature (x), we have a weight, and a scale and translate, like w*F(a+b*x)
@@ -120,6 +144,10 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis",
 		}
 		res
 	}
+	
+	`attributes<-`(m, list(
+		"info" = model_info
+	))
 }
 
 model_loss <- function(model, x, df, y_col) {
