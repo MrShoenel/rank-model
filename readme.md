@@ -20,42 +20,42 @@ example, to implement distribution fitting in the future.
 Currently, the model looks like this:
 
 $$
-\begin{aligned}
-    \mathsf{S}(x)&=\frac{1}{1+\exp{(-x)}},\;\text{the Sigmoid function used for non-linear activation,}
-    \\[1ex]
-    \mathsf{Swish}(x,\beta)&=x\;\mathsf{S}\left(\beta x\right),\;\text{where}\;\frac{1}{10}\leq\beta\leq{2}\;\text{(typically),}
-    \\[1ex]
-    \max_{\mathrm{soft}}(x_1,x_2)&=\frac{1}{2}\left(x_1 + x_2 + \sqrt{(x_1 - x_2)^2 + \alpha}\right),\;\text{a smooth approximation of max, where}\;1e^{-3}\leq\alpha\leq{5e^{-2}}\;\text{(typically),}
-    \\[0ex]
-    \min_{\mathrm{soft}}(x_1,x_2)&=\dots\;\text{same as max, except we flip the sign in front of the square root,}
-    \\[1ex]
-    \mathsf{S}_{\mathrm{hard}}(x)&=\min_{\mathrm{soft}}\left(1,\max_{\mathrm{soft}}\left(0,x\right)\right),\;\text{a linear and hard "Sigmoid" with continuous behavior around}\;x=\{0,1\},
-    \\[1em]
-    m&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\left[w_1\times \mathsf{Swish}(a_1+b_1\times F_{X_1}(x_1))\;+\;\dots\;+\;w_n\times\mathsf{Swish}\left(a_n+b_n\times F_{X_n}(x_n)\right)\right]\right)\right).
-    \\[0ex]
-    &=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\left[\sum_{i=1}^N\,w_i\times\mathsf{Swish}\left(a_i+b_i\times F_{X_i}(x_i)\right)\right]\right)\right),
-    \\[0ex]
-    &=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\mathbf{w}^\top\mathbf{k}\right)\right),
-    \\[0ex]
-    &\qquad\text{where}\;k_i=\mathsf{Swish}\left(a_i+b_i\times F_{X_i}\left(x_i\right)\right).
-\end{aligned}
+\\begin{aligned}
+    \\mathsf{S}(x)&=\\frac{1}{1+\\exp{(-x)}},\\;\\text{the Sigmoid function used for non-linear activation,}
+    \\\\[1ex]
+    \\mathsf{Swish}(x,\\beta)&=x\\;\\mathsf{S}\\left(\\beta x\\right),\\;\\text{where}\\;\\frac{1}{10}\\leq\\beta\\leq{2}\\;\\text{(typically),}
+    \\\\[1ex]
+    \\max_{\\mathrm{soft}}(x_1,x_2)&=\\frac{1}{2}\\left(x_1 + x_2 + \\sqrt{(x_1 - x_2)^2 + \\alpha}\\right),\\;\\text{a smooth approximation of max, where}\\;1e^{-3}\\leq\\alpha\\leq{5e^{-2}}\\;\\text{(typically),}
+    \\\\[0ex]
+    \\min_{\\mathrm{soft}}(x_1,x_2)&=\\dots\\;\\text{same as max, except we flip the sign in front of the square root,}
+    \\\\[1ex]
+    \\mathsf{S}_{\\mathrm{hard}}(x)&=\\min_{\\mathrm{soft}}\\left(1,\\max_{\\mathrm{soft}}\\left(0,x\\right)\\right),\\;\\text{a linear and hard "Sigmoid" with continuous behavior around}\\;x=\\{0,1\\},
+    \\\\[1em]
+    m\\left(\\mathbf{x},a_m,b_m,\\mathbf{w},\\mathbf{a},\\mathbf{b}\\right)&=\\mathsf{PPF}_{Y}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_m+b_m\\times\\left[w_1\\times \\mathsf{Swish}(a_1+b_1\\times F_{X_1}(x_1))\\;+\\;\\dots\\;+\\;w_n\\times\\mathsf{Swish}\\left(a_n+b_n\\times F_{X_n}(x_n)\\right)\\right]\\right)\\right),
+    \\\\[0ex]
+    &=\\mathsf{PPF}_{Y}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_m+b_m\\times\\left[\\sum_{i=1}^N\\,w_i\\times\\mathsf{Swish}\\left(a_i+b_i\\times F_{X_i}(x_i)\\right)\\right]\\right)\\right),
+    \\\\[0ex]
+    &=\\mathsf{PPF}_{Y}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_m+b_m\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
+    \\\\[1em]
+    &\\qquad\\quad\\text{where}\\;k_i=\\mathsf{Swish}\\left(a_i+b_i\\times F_{X_i}\\left(x_i\\right)\\right).
+\\end{aligned}
 $$
 
-Above model predicts the response $y$ for a single datum $\mathbf{x}$
-that has $1\dots n$ features. For when the model has multiple outputs,
+Above model predicts the response $y$ for a single datum $\\mathbf{x}$
+that has $1\\dots n$ features. For when the model has multiple outputs,
 the model has one PPF per output, each with its own linear activation
 (model bias $a_{m_i}$ and -weight $b_{m_i}$):
 
 $$
-\begin{aligned}
-    m&=\begin{cases}
-        \mathsf{PPF}_{Y_1}\left(\mathsf{S}_{\mathrm{hard}}\left(a_{m_1}+b_{m_1}\times\mathbf{w}^\top\mathbf{k}\right)\right),
-        \\
-        \quad\vdots
-        \\
-        \mathsf{PPF}_{Y_n}\left(\mathsf{S}_{\mathrm{hard}}\left(a_{m_n}+b_{m_n}\times\mathbf{w}^\top\mathbf{k}\right)\right),
-    \end{cases}
-\end{aligned}
+\\begin{aligned}
+    m&=\\begin{cases}
+        \\mathsf{PPF}_{Y_1}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_{m_1}+b_{m_1}\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
+        \\\\
+        \\quad\\vdots
+        \\\\
+        \\mathsf{PPF}_{Y_n}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_{m_n}+b_{m_n}\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
+    \\end{cases}
+\\end{aligned}
 $$
 
 This way, all the weights related to $k_i$ are shared. An alternative
@@ -84,7 +84,7 @@ Linear Model** (GLM). However, here are some differences:
 - Since the link-function is a PPF, it has a domain of $[0,1]$. We
   therefore pass the result of the computation into a somewhat hardened
   Sigmoid, that, in actuality, is more like a ReLU with range $[0,1]$
-  and is continuously smooth in the neighborhoods of $x=\{0,1\}$ to
+  and is continuously smooth in the neighborhoods of $x=\\{0,1\\}$ to
   enable smooth gradients (currently, we obtain a numeric gradient, so
   this is of great importance) (Biswas et al. 2022). Also, we pass the
   result with one last additional parameter, a “model-bias” $b_m$.
