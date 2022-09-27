@@ -75,11 +75,7 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis",
 		}
 		ppf_mean <- mean(df_train[, y_col])
 		ppf_sd <- sd(df_train[, y_col])
-		ppf <- function(p) {
-			p[p <= 0] <- 1e-220
-			p[p >= 1] <- 1-1e-16
-			qnorm(p = p, mean = ppf_mean, sd = 1.1 * ppf_sd)
-		}
+		ppf <- make_safe_ppf(ppf = function(p) qnorm(p = p, mean = ppf_mean, sd = 1.1 * ppf_sd))
 	} else if (cdf_type == "logis") {
 		for (x_col in x_cols) {
 			cdfs[[x_col]] <- make_logis_cdf(data = df_train[, x_col])
