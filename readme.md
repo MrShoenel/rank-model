@@ -19,7 +19,7 @@ example, to implement distribution fitting in the future.
 
 Currently, the model looks like this: smooth_min(1, smooth_max(0, x))
 
-
+$$
 \begin{aligned}
     \mathsf{S}(x)&=\frac{1}{1+\exp{(-x)}},\\;\text{the Sigmoid function used for non-linear activation,}
     \\\\\[1ex\]
@@ -39,14 +39,14 @@ Currently, the model looks like this: smooth_min(1, smooth_max(0, x))
     \\\\\[0ex\]
     &\qquad\text{where}\\;k_i=\mathsf{Swish}\left(a_i+b_i\times F\_{X_i}\left(x_i\right)\right).
 \end{aligned}
-
+$$
 
 For when the model has multiple outputs, the model has one PPF per
 output, each with its own linear activation (model weight
 *a*<sub>*m*<sub>*i*</sub></sub> and -bias
 *b*<sub>*m*<sub>*i*</sub></sub>):
 
-
+$$
 \begin{aligned}
     m&=\begin{cases}
         \mathsf{PPF}\_{Y_1}\left(\mathsf{S}\_{\mathrm{hard}}\left(a\_{m_1}+b\_{m_1}\times\mathbf{w}^\top\mathbf{k}\right)\right),
@@ -56,7 +56,7 @@ output, each with its own linear activation (model weight
         \mathsf{PPF}\_{Y_n}\left(\mathsf{S}\_{\mathrm{hard}}\left(a\_{m_n}+b\_{m_n}\times\mathbf{w}^\top\mathbf{k}\right)\right),
     \end{cases}
 \end{aligned}
-
+$$
 
 This way, all the weights related to *k*<sub>*i*</sub> are shared. An
 alternative would be to use a complete own set of weights for each
