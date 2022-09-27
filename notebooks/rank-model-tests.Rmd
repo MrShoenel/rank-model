@@ -19,7 +19,7 @@ library(readxl)
 Folds5x2_pp <- read_excel("../data/Folds5x2_pp.xlsx")
 
 set.seed(1336)
-split_indexes <- caret::createDataPartition(y = Folds5x2_pp$PE, times = 1, p = 0.002, list = FALSE)
+split_indexes <- caret::createDataPartition(y = Folds5x2_pp$PE, times = 1, p = 0.001, list = FALSE)
 
 df_train <- as.data.frame(Folds5x2_pp[split_indexes,])
 df_valid <- as.data.frame(Folds5x2_pp[-split_indexes,][1:2000,])
@@ -28,11 +28,26 @@ df_valid <- df_valid[order(df_valid$PE),]
 
 
 ```{r}
-model <- create_model(df_train = df_train, x_cols = colnames(df_train[1:4]), y_col = colnames(df_train)[5], cdf_type = "g")
+model <- create_model(df_train = df_train, x_cols = colnames(df_train[1:4]), y_col = colnames(df_train)[5], cdf_type = "f")
+```
+
+
+```{r}
 # Test:
 set.seed(1337)
 model(x=runif(14), df_valid[1:10,])
 ```
+
+```{r}
+# Like I wrote before, the current approach to regularization is arbitrary
+# and needs to be thought through well. For example, if, by default, we
+# initialize biases to 0 and weights to 1, then a regularizer could measure
+# the distance from these "ideal" values (ideal here means that if the model
+# would fit the data already perfectly, no adjustments to these would be re-
+# quired).
+model_regularizer <- function(x) 1e-1 * log(1 + mean(x^2))
+```
+
 
 ```{r}
 cl <- parallel::makePSOCKcluster(min(10, parallel::detectCores()))
@@ -40,16 +55,17 @@ cl <- parallel::makePSOCKcluster(min(10, parallel::detectCores()))
 
 
 ```{r}
-parallel::clusterExport(cl, varlist = list("sigmoid", "swish", "smooth_min", "smooth_max", "hard_sigmoid", "model", "model_loss", "df_train"))
+parallel::clusterExport(cl, varlist = list("sigmoid", "swish", "smooth_min", "smooth_max", "hard_sigmoid", "model", "model_regularizer", "model_loss", "df_train"))
 
 set.seed(1)
 res <- optimParallel::optimParallel(
     par = runif(14),
-    lower = rep(-1e3, 14),
-    upper = rep(1e3, 14),
-    fn = function(x) model_loss(model = model, x = x, df = df_train, y_col = "PE"),
+    lower = rep(-1e2, 14),
+    upper = rep( 1e2, 14),
+    # Note how we also added the regularization here:
+    fn = function(x) model_regularizer(x) + model_loss(model = model, x = x, df = df_train, y_col = "PE"),
     parallel = list(cl = cl, forward = FALSE, loginfo = TRUE),
-    control = list(maxit = 250, factr = 1e-3)
+    control = list(maxit = 500, factr = 1e-3) # This is for L-BFGS-B, the only supported minimizer.
 )
 
 plot(log(res$loginfo[,"fn"]), type="l")
@@ -83,7 +99,7 @@ tempf <- function(x, grad = TRUE) {
 	# result, but the weights are much less extreme. However, this
 	# was just a test and if we want to introduce regularization
 	# properly, this needs to be done carefully.
-	# o <- o + 1e-2 * log(1 + mean(x^2))
+	o <- o + model_regularizer(x)
 	if (!grad) {
 		train_hist <<- c(train_hist, o)
 	}
@@ -95,8 +111,8 @@ res <- nloptr::nloptr(
   eval_f = function(x) tempf(x = x, grad = FALSE),
   eval_grad_f = function(x) pracma::grad(f = tempf, x0 = x),
   lb = rep(-1e3, 14),
-  ub = rep(1e3, 14),
-  opts = list(algorithm = "NLOPT_LD_TNEWTON_RESTART", xtol_rel=1e-03, maxeval=250)
+  ub = rep( 1e3, 14),
+  opts = list(algorithm = "NLOPT_LD_SLSQP", xtol_rel=1e-03, maxeval=500)
 )
 ```
 
