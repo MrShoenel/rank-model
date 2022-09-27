@@ -25,19 +25,19 @@ $$
     \\\\[1ex]
     \\mathsf{Swish}(x,\\beta)&=x\\;\\mathsf{S}\\left(\\beta x\\right),\\;\\text{where}\\;\\frac{1}{10}\\leq\\beta\\leq{2}\\;\\text{(typically),}
     \\\\[1ex]
-    \\max_{\\mathrm{soft}}(x_1,x_2)&=\\frac{1}{2}\\left(x_1 + x_2 + \\sqrt{(x_1 - x_2)^2 + \\alpha}\\right),\\;\\text{a smooth approximation of max, where}\\;1e^{-3}\\leq\\alpha\\leq{5e^{-2}}\\;\\text{(typically),}
+    \\max\_{\\mathrm{soft}}(x\_1,x\_2)&=\\frac{1}{2}\\left(x\_1 + x\_2 + \\sqrt{(x\_1 - x\_2)^2 + \\alpha}\\right),\\;\\text{a smooth approximation of max, where}\\;1e^{-3}\\leq\\alpha\\leq{5e^{-2}}\\;\\text{(typically),}
     \\\\[0ex]
-    \\min_{\\mathrm{soft}}(x_1,x_2)&=\\dots\\;\\text{same as max, except we flip the sign in front of the square root,}
+    \\min\_{\\mathrm{soft}}(x\_1,x\_2)&=\\dots\\;\\text{same as max, except we flip the sign in front of the square root,}
     \\\\[1ex]
-    \\mathsf{S}_{\\mathrm{hard}}(x)&=\\min_{\\mathrm{soft}}\\left(1,\\max_{\\mathrm{soft}}\\left(0,x\\right)\\right),\\;\\text{a linear and hard "Sigmoid" with continuous behavior around}\\;x=\\{0,1\\},
+    \\mathsf{S}\_{\\mathrm{hard}}(x)&=\\min\_{\\mathrm{soft}}\\left(1,\\max\_{\\mathrm{soft}}\\left(0,x\\right)\\right),\\;\\text{a linear and hard "Sigmoid" with continuous behavior around}\\;x=\\{0,1\\},
     \\\\[1em]
-    m\\left(\\mathbf{x},a_m,b_m,\\mathbf{w},\\mathbf{a},\\mathbf{b}\\right)&=\\mathsf{PPF}_{Y}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_m+b_m\\times\\left[w_1\\times \\mathsf{Swish}(a_1+b_1\\times F_{X_1}(x_1))\\;+\\;\\dots\\;+\\;w_n\\times\\mathsf{Swish}\\left(a_n+b_n\\times F_{X_n}(x_n)\\right)\\right]\\right)\\right),
+    m\\left(\\mathbf{x},a\_m,b\_m,\\mathbf{w},\\mathbf{a},\\mathbf{b}\\right)&=\\mathsf{PPF}\_{Y}\\left(\\mathsf{S}\_{\\mathrm{hard}}\\left(a\_m+b\_m\\times\\left[w\_1\\times \\mathsf{Swish}(a\_1+b\_1\\times F\_{X\_1}(x\_1))\\;+\\;\\dots\\;+\\;w\_n\\times\\mathsf{Swish}\\left(a\_n+b\_n\\times F\_{X\_n}(x\_n)\\right)\\right]\\right)\\right),
     \\\\[0ex]
-    &=\\mathsf{PPF}_{Y}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_m+b_m\\times\\left[\\sum_{i=1}^N\\,w_i\\times\\mathsf{Swish}\\left(a_i+b_i\\times F_{X_i}(x_i)\\right)\\right]\\right)\\right),
+    &=\\mathsf{PPF}\_{Y}\\left(\\mathsf{S}\_{\\mathrm{hard}}\\left(a\_m+b\_m\\times\\left[\\sum\_{i=1}^N\\,w\_i\\times\\mathsf{Swish}\\left(a\_i+b\_i\\times F\_{X\_i}(x\_i)\\right)\\right]\\right)\\right),
     \\\\[0ex]
-    &=\\mathsf{PPF}_{Y}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_m+b_m\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
+    &=\\mathsf{PPF}\_{Y}\\left(\\mathsf{S}\_{\\mathrm{hard}}\\left(a\_m+b\_m\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
     \\\\[1em]
-    &\\qquad\\quad\\text{where}\\;k_i=\\mathsf{Swish}\\left(a_i+b_i\\times F_{X_i}\\left(x_i\\right)\\right).
+    &\\qquad\\quad\\text{where}\\;k\_i=\\mathsf{Swish}\\left(a\_i+b\_i\\times F\_{X\_i}\\left(x\_i\\right)\\right).
 \\end{aligned}
 $$
 
@@ -49,11 +49,11 @@ the model has one PPF per output, each with its own linear activation
 $$
 \\begin{aligned}
     m&=\\begin{cases}
-        \\mathsf{PPF}_{Y_1}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_{m_1}+b_{m_1}\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
+        \\mathsf{PPF}\_{Y\_1}\\left(\\mathsf{S}\_{\\mathrm{hard}}\\left(a\_{m\_1}+b\_{m\_1}\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
         \\\\
         \\quad\\vdots
         \\\\
-        \\mathsf{PPF}_{Y_n}\\left(\\mathsf{S}_{\\mathrm{hard}}\\left(a_{m_n}+b_{m_n}\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
+        \\mathsf{PPF}\_{Y\_n}\\left(\\mathsf{S}\_{\\mathrm{hard}}\\left(a\_{m\_n}+b\_{m\_n}\\times\\mathbf{w}^\\top\\mathbf{k}\\right)\\right),
     \\end{cases}
 \\end{aligned}
 $$
