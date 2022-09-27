@@ -15,6 +15,14 @@ swish <- function(x) {
 	x / (1 + exp(-.25 * x))
 }
 
+make_safe_ppf <- function(ppf, x_min = 1e-220, x_max = 1-1e-16) {
+	function(p) {
+		p[p <= 0] <- x_min
+		p[p >= 1] <- x_max
+		ppf(p=p)
+	}
+}
+
 
 make_smooth_ecdf <- function(values, slope = 0.025, inverse = FALSE) {
 	r <- range(values)
