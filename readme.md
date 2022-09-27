@@ -1,11 +1,11 @@
 # Rank-Models for Robust Regression Below 200 Observations
 
-The (current) purpose of this repository is test some models and collect
-data about their performance, compared to existing state-of-the-art
-models. It appears that building robust regression models gets more
-difficult with fewer observations. Suppose you have a regression (or
-classification) problem with **less than 200** labeled observations,
-perhaps even less than **20**! Obtaining a model with good
+The (current) purpose of this repository is to test some models and
+collect data about their performance, compared to existing
+state-of-the-art models. It appears that building robust regression
+models gets more difficult with fewer observations. Suppose you have a
+regression (or classification) problem with **less than 200** labeled
+observations, perhaps even less than **20**! Obtaining a model with good
 generalization then is difficult.
 
 We propose to transform the data to ranks, using its estimated
@@ -31,11 +31,11 @@ $$
     \\\\\[1ex\]
     \mathsf{S}\_{\mathrm{hard}}(x)&=\min\_{\mathrm{soft}}\left(1,\max\_{\mathrm{soft}}\left(0,x\right)\right),\\;\text{a linear and hard "Sigmoid" with continuous behavior around}\\;x=\\{0,1\\},
     \\\\\[1em\]
-    m&=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(b_m+\left\[w_1\times \mathsf{Swish}(a_1+b_1\times F\_{X_1}(x_1))\\;+\\;\dots\\;+\\;w_n\times\mathsf{Swish}\left(a_n+b_n\times F\_{X_n}(x_n)\right)\right\]\right)\right).
+    m&=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(a_m+b_m\times\left\[w_1\times \mathsf{Swish}(a_1+b_1\times F\_{X_1}(x_1))\\;+\\;\dots\\;+\\;w_n\times\mathsf{Swish}\left(a_n+b_n\times F\_{X_n}(x_n)\right)\right\]\right)\right).
     \\\\\[0ex\]
-    &=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(b_m+\left\[\sum\_{i=1}^N\\,w_i\times\mathsf{Swish}\left(a_i+b_i\times F\_{X_i}(x_i)\right)\right\]\right)\right),
+    &=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(a_m+b_m\times\left\[\sum\_{i=1}^N\\,w_i\times\mathsf{Swish}\left(a_i+b_i\times F\_{X_i}(x_i)\right)\right\]\right)\right),
     \\\\\[0ex\]
-    &=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(b_m+ \mathbf{w}^\top\mathbf{k}\right)\right),
+    &=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(a_m+b_m\times\mathbf{w}^\top\mathbf{k}\right)\right),
     \\\\\[0ex\]
     &\qquad\text{where}\\;k_i=\mathsf{Swish}\left(a_i+b_i\times F\_{X_i}\left(x_i\right)\right).
 \end{aligned}
@@ -58,13 +58,11 @@ $$
 \end{aligned}
 $$
 
-This way, all the weights related to *k*<sub>*i*</sub> are shared. Note
-how add an additional weight here that will allow an individual scale
-and translate for each response variable. This is not necessary in the
-single-feature case An alternative would be to use a complete own set of
-weights for each output, which will essentially result in an extra model
-for each output. This is not what we will do, because if this were the
-purpose, one would simply create separate models instead.
+This way, all the weights related to *k*<sub>*i*</sub> are shared. An
+alternative would be to use a complete own set of weights for each
+output, which will essentially result in an extra model for each output.
+This is not what we will do, because if this were the purpose, one would
+simply create separate models instead.
 
 It is obvious that this model is somewhat similar to a **Generalized
 Linear Model** (GLM). However, here are some differences:

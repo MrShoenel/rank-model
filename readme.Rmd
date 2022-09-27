@@ -10,7 +10,7 @@ output:
 
 # Rank-Models for Robust Regression Below 200 Observations
 
-The (current) purpose of this repository is test some models and collect data about their performance, compared to existing state-of-the-art models.
+The (current) purpose of this repository is to test some models and collect data about their performance, compared to existing state-of-the-art models.
 It appears that building robust regression models gets more difficult with fewer observations.
 Suppose you have a regression (or classification) problem with __less than $200$__ labeled observations, perhaps even less than __$20$__!
 Obtaining a model with good generalization then is difficult.
