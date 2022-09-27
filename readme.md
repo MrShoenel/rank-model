@@ -17,7 +17,7 @@ problems. For CDF and PPF, we currently support the Gaussian Kernel, an
 empirical Kernel, and a smoothed version thereof. It is conceivable, for
 example, to implement distribution fitting in the future.
 
-Currently, the model looks like this: smooth_min(1, smooth_max(0, x))
+Currently, the model looks like this:
 
 $$
 \begin{aligned}
@@ -61,3 +61,5 @@ $$
 This way, all the weights related to *k*<sub>*i*</sub> are shared. An
 alternative would be to use a complete own set of weights for each
 output, which will essentially result in an extra model for each output.
+This is not what we will do, because if this were the purpose, one would
+simply create separate models instead.
