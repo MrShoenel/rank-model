@@ -1,0 +1,175 @@
+---
+title: "Rank-model Tests"
+output: html_notebook
+---
+
+# Rank-model Tests
+
+In this notebook, we test the rank model using very low counts of labeled observations against other, state-of-the-art models, such as Random forest, GBM, and Generalized Linear Models.
+We deliberately pick an example where the Rank-model is best. For a proper validation, we would need to compute a grid of various settings and repeat each computation numerous times with different seeds. This, however, is not done here.
+
+
+```{r}
+source(file = "../R/helpers.R")
+source(file = "../R/rank-model.R")
+```
+
+```{r}
+library(readxl)
+Folds5x2_pp <- read_excel("../data/Folds5x2_pp.xlsx")
+
+set.seed(1336)
+split_indexes <- caret::createDataPartition(y = Folds5x2_pp$PE, times = 1, p = 0.002, list = FALSE)
+
+df_train <- as.data.frame(Folds5x2_pp[split_indexes,])
+df_valid <- as.data.frame(Folds5x2_pp[-split_indexes,][1:2000,])
+df_valid <- df_valid[order(df_valid$PE),]
+```
+
+
+```{r}
+model <- create_model(df_train = df_train, x_cols = colnames(df_train[1:4]), y_col = colnames(df_train)[5], cdf_type = "g")
+# Test:
+set.seed(1337)
+model(x=runif(14), df_valid[1:10,])
+```
+
+```{r}
+cl <- parallel::makePSOCKcluster(min(10, parallel::detectCores()))
+```
+
+
+```{r}
+parallel::clusterExport(cl, varlist = list("sigmoid", "swish", "smooth_min", "smooth_max", "hard_sigmoid", "model", "model_loss", "df_train"))
+
+set.seed(1)
+res <- optimParallel::optimParallel(
+    par = runif(14),
+    lower = rep(-1e3, 14),
+    upper = rep(1e3, 14),
+    fn = function(x) model_loss(model = model, x = x, df = df_train, y_col = "PE"),
+    parallel = list(cl = cl, forward = FALSE, loginfo = TRUE),
+    control = list(maxit = 250, factr = 1e-3)
+)
+
+plot(log(res$loginfo[,"fn"]), type="l")
+grid()
+```
+
+```{r}
+parallel::stopCluster(cl)
+```
+
+```{r}
+#res$par
+model_loss(model = model, x = res$par, df = df_train, y_col = "PE")
+model_loss(model = model, x = res$par, df = df_valid, y_col = "PE")
+```
+
+```{r}
+plot(df_valid$PE, pch=1)
+points(model(x = res$par, df = df_valid), col="red", pch = 4)
+grid()
+```
+
+Let's also try nloptr:
+
+```{r}
+set.seed(1)
+train_hist <- c()
+tempf <- function(x, grad = TRUE) {
+	o <- model_loss(model = model, x = x, df = df_train, y_col = "PE")
+	# I added some L2 regularization here. We get a slightly worse
+	# result, but the weights are much less extreme. However, this
+	# was just a test and if we want to introduce regularization
+	# properly, this needs to be done carefully.
+	# o <- o + 1e-2 * log(1 + mean(x^2))
+	if (!grad) {
+		train_hist <<- c(train_hist, o)
+	}
+	o
+}
+
+res <- nloptr::nloptr(
+  x0 = runif(14),
+  eval_f = function(x) tempf(x = x, grad = FALSE),
+  eval_grad_f = function(x) pracma::grad(f = tempf, x0 = x),
+  lb = rep(-1e3, 14),
+  ub = rep(1e3, 14),
+  opts = list(algorithm = "NLOPT_LD_TNEWTON_RESTART", xtol_rel=1e-03, maxeval=250)
+)
+```
+
+
+```{r}
+plot(log(train_hist), type="l")
+grid()
+print(res$objective)
+#model_loss(model = model, x = res$solution, df = df_valid, y_col = "PE")
+Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = model(x = res$solution, df = df_valid))
+```
+
+```{r}
+temp <- df_valid$PE - model(x = res$solution, df = df_valid)
+plot(sort(temp))
+grid()
+boxplot(temp)
+grid()
+plot(density(temp))
+grid()
+```
+
+
+```{r}
+plot(df_valid$PE, pch=1)
+points(model(x = res$solution, df = df_valid), col="red", pch = 4)
+grid()
+```
+
+
+```{r}
+set.seed(1338)
+temp <- randomForest::randomForest(PE ~., df_train)
+Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train))
+Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = stats::predict(temp, df_valid))
+```
+
+```{r}
+plot(df_valid$PE, pch=1)
+points(stats::predict(temp, df_valid), col="red", pch=4)
+grid()
+```
+
+```{r}
+set.seed(1338)
+temp <- gbm::gbm(PE ~., data = df_train, n.minobsinnode = 1, distribution = "gaussian", verbose = FALSE)
+suppressMessages({
+	Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train))
+})
+suppressMessages({
+	Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = stats::predict(temp, df_valid))
+})
+```
+
+```{r}
+suppressMessages({
+	plot(df_valid$PE, pch=1)
+	points(stats::predict(temp, df_valid), col="red", pch=4)
+	grid()
+})
+```
+
+
+```{r}
+set.seed(1338)
+temp <- stats::glm(PE ~., data = df_train, family = gaussian)
+Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train))
+Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = stats::predict(temp, df_valid))
+```
+
+```{r}
+plot(df_valid$PE, pch=1)
+points(stats::predict(temp, df_valid), col="red", pch=4)
+grid()
+```
+
