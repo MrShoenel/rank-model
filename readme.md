@@ -31,7 +31,7 @@ $$
     \\[1ex]
     \mathsf{S}_{\mathrm{hard}}(x)&=\min_{\mathrm{soft}}\left(1,\max_{\mathrm{soft}}\left(0,x\right)\right),\;\text{a linear and hard "Sigmoid" with continuous behavior around}\;x=\{0,1\},
     \\[1em]
-    m&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\left[w_1\times \mathsf{Swish}(a_1+b_1\times F_{X_1}(x_1))\;+\;\dots\;+\;w_n\times\mathsf{Swish}\left(a_n+b_n\times F_{X_n}(x_n)\right)\right]\right)\right),
+    m&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\left[w_1\times \mathsf{Swish}(a_1+b_1\times F_{X_1}(x_1))\;+\;\dots\;+\;w_n\times\mathsf{Swish}\left(a_n+b_n\times F_{X_n}(x_n)\right)\right]\right)\right).
     \\[0ex]
     &=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\left[\sum_{i=1}^N\,w_i\times\mathsf{Swish}\left(a_i+b_i\times F_{X_i}(x_i)\right)\right]\right)\right),
     \\[0ex]
