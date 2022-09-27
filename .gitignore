@@ -37,3 +37,6 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Rendered notebooks as html:
+notebooks/*.nb.html
