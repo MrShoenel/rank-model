@@ -34,7 +34,7 @@ fit_cont_parametric <- function(data, test_distr = c("beta", "cauchy", "gamma", 
 		dist_params <- setNames(as.list(unname(result$estimate)), names(result$estimate))
 		if (over_scale > 0) {
 			if ("scale" %in% names(dist_params)) {
-				dist_params$scale <- dist_params$scale * 1 + over_scale
+				dist_params$scale <- dist_params$scale * (1 + over_scale)
 			} else if ("min" %in% names(dist_params) && "max" %in% names(dist_params)) {
 				ext <- dist_params$max - dist_params$min
 				dist_params$min <- dist_params$min - over_scale / 2 * ext
