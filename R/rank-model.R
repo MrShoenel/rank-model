@@ -155,3 +155,14 @@ model_loss <- function(model, x, df, y_col) {
 	Metrics::rmse(actual = as.numeric(df[, y_col]), predicted = model(x = x, df = df))
 }
 
+model_loss_ws <- function(model, x, df, y_col) {
+	sample1 <- as.numeric(df[, y_col])
+	sample2 <- model(x = x, df = df)
+	log(1 + wasserstein_distance(sample1 = sample1, sample2 = sample2, continuous = FALSE))
+}
+
+model_loss_kla <- function(model, x, df, y_col) {
+	sample1 <- as.numeric(df[, y_col])
+	sample2 <- model(x = x, df = df)
+	kl_div_approx(sample1 = sample1, sample2 = sample2)
+}
