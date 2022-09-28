@@ -59,9 +59,9 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis",
 		"distr" = list()
 	)
 	
-	make_gauss_cdf <- function(data) {
+	make_gauss_cdf <- function(data, over_scale = 0) {
 		mean_ <- mean(data)
-		sd_ <- sd(data)
+		sd_ <- (1 + over_scale) * sd(data)
 		function(q) pnorm(q = q, mean = mean_, sd = sd_)
 	}
 	
@@ -75,11 +75,11 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis",
 	cdfs <- list()
 	if (cdf_type == "gauss") {
 		for (x_col in x_cols) {
-			cdfs[[x_col]] <- make_gauss_cdf(data = df_train[, x_col])
+			cdfs[[x_col]] <- make_gauss_cdf(data = df_train[, x_col], over_scale = .1)
 		}
 		ppf_mean <- mean(df_train[, y_col])
-		ppf_sd <- sd(df_train[, y_col])
-		ppf <- make_safe_ppf(ppf = function(p) qnorm(p = p, mean = ppf_mean, sd = 1.1 * ppf_sd))
+		ppf_sd <- 1.1 * sd(df_train[, y_col]) # Note how we over-scale here as well
+		ppf <- make_safe_ppf(ppf = function(p) qnorm(p = p, mean = ppf_mean, sd = ppf_sd))
 	} else if (cdf_type == "logis") {
 		for (x_col in x_cols) {
 			cdfs[[x_col]] <- make_logis_cdf(data = df_train[, x_col])
