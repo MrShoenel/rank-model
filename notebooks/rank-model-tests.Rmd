@@ -55,7 +55,7 @@ cl <- parallel::makePSOCKcluster(min(10, parallel::detectCores()))
 
 
 ```{r}
-parallel::clusterExport(cl, varlist = list("sigmoid", "swish", "smooth_min", "smooth_max", "hard_sigmoid", "model", "model_regularizer", "model_loss", "df_train"))
+parallel::clusterExport(cl, varlist = list("sigmoid", "swish", "smooth_min", "smooth_max", "hard_sigmoid", "model", "model_regularizer", "model_loss", "model_loss_ws", "wasserstein_distance", "model_loss_kla", "kl_div_approx", "df_train"))
 
 set.seed(1)
 res <- optimParallel::optimParallel(
