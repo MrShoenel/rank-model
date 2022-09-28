@@ -33,7 +33,7 @@ df_valid <- df_valid[order(df_valid$PE),]
 
 
 ```{r}
-model <- create_model(df_train = df_train, x_cols = colnames(df_train[1:4]), y_col = colnames(df_train)[5], cdf_type = "f")
+model <- create_model(df_train = df_train, x_cols = colnames(df_train[1:4]), y_col = colnames(df_train)[5], cdf_type = "gauss")
 ```
 
 
@@ -55,7 +55,7 @@ model_regularizer <- function(x) 1e-1 * log(1 + mean(x^2))
 
 ```{r}
 result_parallel <- loadResultsOrCompute(file = "../results/rank_pred_parallel.rds", computeExpr = {
-	cl <- parallel::makePSOCKcluster(min(10, parallel::detectCores()))
+	cl <- parallel::makePSOCKcluster(min(12, parallel::detectCores()))
 	
 	doWithParallelClusterExplicit(cl = cl, stopCl = TRUE, expr = {
 		parallel::clusterExport(cl, varlist = list("sigmoid", "swish", "smooth_min", "smooth_max", "hard_sigmoid", "model", "model_regularizer", "model_loss", "model_loss_ws", "wasserstein_distance", "model_loss_kla", "kl_div_approx", "df_train"))
@@ -63,19 +63,26 @@ result_parallel <- loadResultsOrCompute(file = "../results/rank_pred_parallel.rd
 		set.seed(1)
 		res <- optimParallel::optimParallel(
 		    par = runif(14),
-		    lower = rep(-1e2, 14),
-		    upper = rep( 1e2, 14),
+		    lower = rep(-1e3, 14),
+		    upper = rep( 1e3, 14),
 		    # Note how we also added the regularization here:
 		    fn = function(x) model_regularizer(x) + model_loss(model = model, x = x, df = df_train, y_col = "PE"),
 		    parallel = list(cl = cl, forward = FALSE, loginfo = TRUE),
 		    control = list(maxit = 500, factr = 1e-3)) # This is for L-BFGS-B, the only supported minimizer.
 		
+		library(foreach)
 		list(
 			"res" = res,
 			"train_hist" = res$loginfo[,"fn"],
 			"loss_train" = model_loss(model = model, x = res$par, df = df_train, y_col = "PE"),
 			"loss_valid" = model_loss(model = model, x = res$par, df = df_valid, y_col = "PE"),
-			"pred" = model(x = res$par, df = df_valid))
+			"pred" = foreach::foreach(
+				rn = rownames(df_valid),
+				.inorder = TRUE,
+				.combine = c
+			) %dopar% {
+				model(x = res$par, df = df_valid[rn,])
+			})
 	})
 })
 ```
@@ -288,5 +295,52 @@ boxplot(bp_gbm, ylim = ylim, main = "gbm")
 boxplot(bp_glm, ylim = ylim, main = "glm")
 ```
 
+
+```{r fig.width=12, fig.height=4}
+par(mfrow = c(1,5))
+
+plot(df_valid$PE, pch=1)
+points(result_parallel$pred, col="red", pch = 4)
+grid()
+plot(df_valid$PE, pch=1)
+points(result_nloptr$pred, col="red", pch = 4)
+grid()
+
+plot(df_valid$PE, pch=1)
+points(pred_rf, col="red", pch=4)
+grid()
+
+plot(df_valid$PE, pch=1)
+points(pred_gbm, col="red", pch=4)
+grid()
+
+plot(df_valid$PE, pch=1)
+points(pred_glm, col="red", pch=4)
+grid()
+```
+
+In the following plot, we show the distribution of the true numeric labels, as well as the distribution of the predicted labels from all models.
+The Rank-Models predict labels that result in a distribution closest to the true distribution.
+
+
+```{r fig.width=10, fig.height=6}
+dens_valid <- density(df_valid$PE)
+dens_parallel <- density(result_parallel$pred)
+dens_nloptr <- density(result_nloptr$pred)
+dens_rf <- density(pred_rf)
+dens_gbm <- density(pred_gbm)
+dens_glm <- density(pred_glm)
+
+xlim <- range(c(dens_valid$x, dens_parallel$x, dens_nloptr$x, dens_rf$x, dens_gbm$x, dens_glm$x))
+ylim <- range(c(dens_valid$y, dens_parallel$y, dens_nloptr$y, dens_rf$y, dens_gbm$y, dens_glm$y))
+plot(dens_valid, xlim = xlim, ylim = ylim, lwd = 3)
+lines(dens_parallel, col = "orange", lwd = 1.5)
+lines(dens_nloptr, col = "red", lwd = 1.5)
+lines(dens_rf, col = "#00aa00", lwd = 1.5)
+lines(dens_gbm, col = "purple", lwd = 1.5)
+lines(dens_glm, col = "blue", lwd = 1.5)
+grid()
+legend(x = xlim[1], y = ylim[2], legend = c("True distribution", "Rank-Model (parallel)", "Rank-Model (nloptr)", "Random forest", "GBM", "GLM"), col = c("#000000", "orange", "red", "#00aa00", "purple", "blue"), lwd = c(4, rep(2,5)))
+```
 
 
