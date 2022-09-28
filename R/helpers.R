@@ -118,3 +118,61 @@ kl_div_approx <- function(sample1, sample2) {
 
 
 
+doWithParallelCluster <- function(expr, errorValue = NULL, numCores = parallel::detectCores()) {
+	cl <- parallel::makePSOCKcluster(numCores)
+	doSNOW::registerDoSNOW(cl)
+	mev <- missing(errorValue)
+	
+	result <- tryCatch(expr, error=function(cond) {
+		if (!mev) {
+			return(errorValue)
+		}
+		return(cond)
+	}, finally = {
+		parallel::stopCluster(cl)
+		foreach::registerDoSEQ()
+		cl <- NULL
+		gc()
+	})
+	return(result)
+}
+
+doWithParallelClusterExplicit <- function(cl, expr, errorValue = NULL, stopCl = TRUE) {
+	doSNOW::registerDoSNOW(cl = cl)
+	mev <- missing(errorValue)
+	
+	tryCatch(expr, error = function(cond) {
+		if (!mev) {
+			return(errorValue)
+		}
+		return(cond)
+	}, finally = {
+		if (stopCl) {
+			parallel::stopCluster(cl)
+			foreach::registerDoSEQ()
+			gc()
+		}
+	})
+}
+
+loadResultsOrCompute <- function(file, computeExpr) {
+	file <- base::normalizePath(file, mustWork = FALSE)
+	if (file.exists(file)) {
+		return(base::readRDS(file))
+	}
+	
+	res <- base::tryCatch(
+		expr = computeExpr, error = function(cond) cond)
+	
+	# 'res' may have more than one class.
+	if (any(class(res) %in% c("simpleError", "error", "condition"))) {
+		print(traceback())
+		stop(paste0("The computation failed: ", res))
+	}
+	
+	base::saveRDS(res, file)
+	return(res)
+}
+
+
+
