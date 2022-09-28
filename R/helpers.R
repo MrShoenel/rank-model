@@ -89,4 +89,32 @@ fit_cont_parametric <- function(data, test_distr = c("beta", "cauchy", "gamma", 
 }
 
 
+wasserstein_distance <- function(sample1, sample2, continuous = FALSE, discrete_samples = 1e4) {
+	e1 <- stats::ecdf(sample1)
+	e2 <- stats::ecdf(sample2)
+	min_ <- min(c(sample1, sample2))
+	max_ <- max(c(sample1, sample2))
+	ext <- max_ - min_
+	
+	if (continuous) {
+		return(cubature::cubintegrate(f = function(x) abs(e1(x) - e2(x)), lower = min_, upper = max_, maxEval = 2e4)$integral)
+	}
+
+	d <- 0
+	for (x in seq(from = min_, to = max_, length.out = discrete_samples)) {
+		d <- d + abs(e1(x) - e2(x))
+	}
+	d / discrete_samples * ext
+}
+
+kl_div_approx <- function(sample1, sample2) {
+	d1 <- stats::density(sample1)
+	d2 <- stats::density(sample2)
+	y1 <- d1$y / sum(d1$y)
+	y2 <- d2$y / sum(d2$y)
+	
+	sum(y1 * (log2(y1) - log2(y2)))
+}
+
+
 
