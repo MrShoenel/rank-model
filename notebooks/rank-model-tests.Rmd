@@ -1,6 +1,11 @@
 ---
 title: "Rank-model Tests"
-output: html_notebook
+urlcolor: blue
+output:
+  md_document:
+    toc: no
+    df_print: kable
+    variant: gfm
 ---
 
 # Rank-model Tests
@@ -48,144 +53,240 @@ model(x=runif(14), df_valid[1:10,])
 model_regularizer <- function(x) 1e-1 * log(1 + mean(x^2))
 ```
 
-
 ```{r}
-cl <- parallel::makePSOCKcluster(min(10, parallel::detectCores()))
+result_parallel <- loadResultsOrCompute(file = "../results/rank_pred_parallel.rds", computeExpr = {
+	cl <- parallel::makePSOCKcluster(min(10, parallel::detectCores()))
+	
+	doWithParallelClusterExplicit(cl = cl, stopCl = TRUE, expr = {
+		parallel::clusterExport(cl, varlist = list("sigmoid", "swish", "smooth_min", "smooth_max", "hard_sigmoid", "model", "model_regularizer", "model_loss", "model_loss_ws", "wasserstein_distance", "model_loss_kla", "kl_div_approx", "df_train"))
+
+		set.seed(1)
+		res <- optimParallel::optimParallel(
+		    par = runif(14),
+		    lower = rep(-1e2, 14),
+		    upper = rep( 1e2, 14),
+		    # Note how we also added the regularization here:
+		    fn = function(x) model_regularizer(x) + model_loss(model = model, x = x, df = df_train, y_col = "PE"),
+		    parallel = list(cl = cl, forward = FALSE, loginfo = TRUE),
+		    control = list(maxit = 500, factr = 1e-3)) # This is for L-BFGS-B, the only supported minimizer.
+		
+		list(
+			"res" = res,
+			"train_hist" = res$loginfo[,"fn"],
+			"loss_train" = model_loss(model = model, x = res$par, df = df_train, y_col = "PE"),
+			"loss_valid" = model_loss(model = model, x = res$par, df = df_valid, y_col = "PE"),
+			"pred" = model(x = res$par, df = df_valid))
+	})
+})
 ```
 
-
 ```{r}
-parallel::clusterExport(cl, varlist = list("sigmoid", "swish", "smooth_min", "smooth_max", "hard_sigmoid", "model", "model_regularizer", "model_loss", "model_loss_ws", "wasserstein_distance", "model_loss_kla", "kl_div_approx", "df_train"))
+`names<-`(
+	x = c(result_parallel$res$value, result_parallel$loss_train, result_parallel$loss_valid),
+	value = c("objective", "loss_train", "loss_valid"))
+```
 
-set.seed(1)
-res <- optimParallel::optimParallel(
-    par = runif(14),
-    lower = rep(-1e2, 14),
-    upper = rep( 1e2, 14),
-    # Note how we also added the regularization here:
-    fn = function(x) model_regularizer(x) + model_loss(model = model, x = x, df = df_train, y_col = "PE"),
-    parallel = list(cl = cl, forward = FALSE, loginfo = TRUE),
-    control = list(maxit = 500, factr = 1e-3) # This is for L-BFGS-B, the only supported minimizer.
-)
-
-plot(log(res$loginfo[,"fn"]), type="l")
+```{r fig.width=8, fig.height=4}
+par(mfrow = c(1,2))
+plot(log(result_parallel$train_hist), type="l")
 grid()
-```
 
-```{r}
-parallel::stopCluster(cl)
-```
-
-```{r}
-#res$par
-model_loss(model = model, x = res$par, df = df_train, y_col = "PE")
-model_loss(model = model, x = res$par, df = df_valid, y_col = "PE")
-```
-
-```{r}
 plot(df_valid$PE, pch=1)
-points(model(x = res$par, df = df_valid), col="red", pch = 4)
+points(result_parallel$pred, col="red", pch = 4)
 grid()
 ```
 
 Let's also try nloptr:
 
 ```{r}
-set.seed(1)
-train_hist <- c()
-tempf <- function(x, grad = TRUE) {
-	o <- model_loss(model = model, x = x, df = df_train, y_col = "PE")
-	# I added some L2 regularization here. We get a slightly worse
-	# result, but the weights are much less extreme. However, this
-	# was just a test and if we want to introduce regularization
-	# properly, this needs to be done carefully.
-	o <- o + model_regularizer(x)
-	if (!grad) {
-		train_hist <<- c(train_hist, o)
+result_nloptr <- loadResultsOrCompute(file = "../results/rank_pred_nloptr.rds", computeExpr = {
+	set.seed(1)
+
+	train_hist <- c()
+	tempf <- function(x, grad = TRUE) {
+		o <- model_loss(model = model, x = x, df = df_train, y_col = "PE")
+		# I added some L2 regularization here. We get a slightly worse
+		# result, but the weights are much less extreme. However, this
+		# was just a test and if we want to introduce regularization
+		# properly, this needs to be done carefully.
+		o <- o + model_regularizer(x)
+		if (!grad) {
+			train_hist <<- c(train_hist, o)
+		}
+		o
 	}
-	o
-}
 
-res <- nloptr::nloptr(
-  x0 = runif(14),
-  eval_f = function(x) tempf(x = x, grad = FALSE),
-  eval_grad_f = function(x) pracma::grad(f = tempf, x0 = x),
-  lb = rep(-1e3, 14),
-  ub = rep( 1e3, 14),
-  opts = list(algorithm = "NLOPT_LD_SLSQP", xtol_rel=1e-03, maxeval=500)
-)
+	res <- nloptr::nloptr(
+	  x0 = runif(14),
+	  eval_f = function(x) tempf(x = x, grad = FALSE),
+	  eval_grad_f = function(x) pracma::grad(f = tempf, x0 = x),
+	  lb = rep(-1e3, 14),
+	  ub = rep( 1e3, 14),
+	  opts = list(algorithm = "NLOPT_LD_TNEWTON", xtol_rel=1e-3, maxeval=500))
+
+	list(
+		"res" = res,
+		"train_hist" = train_hist,
+		"loss_train" = model_loss(model = model, x = res$solution, df = df_train, y_col = "PE"),
+		"loss_valid" = model_loss(model = model, x = res$solution, df = df_valid, y_col = "PE"),
+		"pred" = model(x = res$solution, df = df_valid))
+})
 ```
 
-
 ```{r}
-plot(log(train_hist), type="l")
+`names<-`(
+	x = c(result_nloptr$res$objective, result_nloptr$loss_train, result_nloptr$loss_valid),
+	value = c("objective", "loss_train", "loss_valid"))
+```
+
+```{r fig.width=8, fig.height=4}
+par(mfrow = c(1,2))
+plot(log(result_nloptr$train_hist), type="l")
 grid()
-print(res$objective)
-#model_loss(model = model, x = res$solution, df = df_valid, y_col = "PE")
-Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = model(x = res$solution, df = df_valid))
+
+plot(df_valid$PE, pch=1)
+points(result_nloptr$pred, col="red", pch = 4)
+grid()
 ```
 
-```{r}
-temp <- df_valid$PE - model(x = res$solution, df = df_valid)
+```{r fig.width=8, fig.height=4}
+par(mfrow = c(1,3))
+temp <- df_valid$PE - result_nloptr$pred
 plot(sort(temp))
 grid()
-boxplot(temp)
+boxplot(abs(temp))
 grid()
 plot(density(temp))
 grid()
 ```
 
 
-```{r}
-plot(df_valid$PE, pch=1)
-points(model(x = res$solution, df = df_valid), col="red", pch = 4)
-grid()
-```
+# Testing of other Models
+
+Here, we test other state-of-the-art models on the same data.
+In particular, we test a Random forest, a Gradient Boosting Machine, and a Generalized Linear Model.
 
 
 ```{r}
 set.seed(1338)
 temp <- randomForest::randomForest(PE ~., df_train)
-Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train))
-Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = stats::predict(temp, df_valid))
+pred_rf <- stats::predict(temp, df_valid)
+
+`names<-`(
+	x = c(
+		Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train)),
+		Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = pred_rf)),
+	value = c("loss_train", "loss_valid"))
 ```
 
-```{r}
+```{r fig.width=8, fig.height=4}
+par(mfrow = c(1,2))
 plot(df_valid$PE, pch=1)
-points(stats::predict(temp, df_valid), col="red", pch=4)
+points(pred_rf, col="red", pch=4)
+grid()
+
+temp <- df_valid$PE - pred_rf
+boxplot(abs(temp))
 grid()
 ```
+
 
 ```{r}
 set.seed(1338)
 temp <- gbm::gbm(PE ~., data = df_train, n.minobsinnode = 1, distribution = "gaussian", verbose = FALSE)
-suppressMessages({
-	Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train))
+
+pred_gbm <- suppressMessages({
+	stats::predict(temp, df_valid)
 })
-suppressMessages({
-	Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = stats::predict(temp, df_valid))
-})
+
+`names<-`(
+	x = c(
+		suppressMessages({
+			Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train))
+		}),
+		Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = pred_gbm)),
+	value = c("loss_train", "loss_valid"))
 ```
 
-```{r}
-suppressMessages({
-	plot(df_valid$PE, pch=1)
-	points(stats::predict(temp, df_valid), col="red", pch=4)
-	grid()
-})
+```{r fig.width=8, fig.height=4}
+par(mfrow = c(1,2))
+plot(df_valid$PE, pch=1)
+points(pred_gbm, col="red", pch=4)
+grid()
+
+temp <- df_valid$PE - pred_gbm
+boxplot(abs(temp))
+grid()
 ```
 
 
 ```{r}
 set.seed(1338)
 temp <- stats::glm(PE ~., data = df_train, family = gaussian)
-Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train))
-Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = stats::predict(temp, df_valid))
+pred_glm <- stats::predict(temp, df_valid)
+
+`names<-`(
+	x = c(
+		Metrics::rmse(actual = as.numeric(df_train$PE), predicted = stats::predict(temp, df_train)),
+		Metrics::rmse(actual = as.numeric(df_valid$PE), predicted = pred_glm)),
+	value = c("loss_train", "loss_valid"))
 ```
 
-```{r}
+```{r fig.width=8, fig.height=4}
+par(mfrow = c(1,2))
 plot(df_valid$PE, pch=1)
-points(stats::predict(temp, df_valid), col="red", pch=4)
+points(pred_glm, col="red", pch=4)
+grid()
+
+temp <- df_valid$PE - pred_glm
+boxplot(abs(temp))
 grid()
 ```
+
+# Comparison of Rank-model to Others
+
+Let's compare the models' performances.
+
+```{r}
+`names<-`(
+	x = c(nrow(df_train), nrow(df_valid)),
+	value = c("Num_obs", "num_valid"))
+```
+
+In the following table, "se" means squared error. All results are computed using the validation data.
+
+```{r}
+bp_parallel <- sqrt((df_valid$PE - result_parallel$pred)^2)
+bp_nloptr <- sqrt((df_valid$PE - result_nloptr$pred)^2)
+bp_rf <- sqrt((df_valid$PE - pred_rf)^2)
+bp_gbm <- sqrt((df_valid$PE - pred_gbm)^2)
+bp_glm <- sqrt((df_valid$PE - pred_glm)^2)
+
+rq <- function(x) round(x = quantile(x, c(0, .25, .5, .75, 1)), digits = 5)
+
+`rownames<-`(
+	x = data.frame(
+		rank_parallel = c(result_parallel$loss_valid, mean(bp_parallel), rq(bp_parallel)),
+		rank_nloptr = c(result_nloptr$loss_valid, mean(bp_nloptr), rq(bp_nloptr)),
+		rf = c(Metrics::rmse(actual = df_valid$PE, predicted = pred_rf), mean(bp_rf), rq(bp_rf)),
+		gbm = c(Metrics::rmse(actual = df_valid$PE, predicted = pred_gbm), mean(bp_gbm), rq(bp_gbm)),
+		glm = c(Metrics::rmse(actual = df_valid$PE, predicted = pred_glm), mean(bp_glm), rq(bp_glm))),
+	value = c("valid_rmse", "valid_se_mean", "valid_se_quant_0", "valid_se_quant_0.25", "valid_se_quant_0.5", "valid_se_quant_0.75", "valid_rmse_quant_1")
+)
+```
+
+```{r fig.width=8, fig.height=4}
+par(mfrow = c(1,5))
+ylim <- c(
+	min(c(bp_parallel, bp_nloptr, bp_rf, bp_gbm, bp_glm)),
+	max(c(bp_parallel, bp_nloptr, bp_rf, bp_gbm, bp_glm)))
+
+boxplot(bp_parallel, ylim = ylim, main = "rank_parallel")
+boxplot(bp_nloptr, ylim = ylim, main = "rank_nloptr")
+boxplot(bp_rf, ylim = ylim, main = "rf")
+boxplot(bp_gbm, ylim = ylim, main = "gbm")
+boxplot(bp_glm, ylim = ylim, main = "glm")
+```
+
+
 
