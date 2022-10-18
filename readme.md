@@ -31,20 +31,20 @@ $$
     \\\\\[1ex\]
     \mathsf{S}\_{\mathrm{hard}}(x)&=\min\_{\mathrm{soft}}\left(1,\max\_{\mathrm{soft}}\left(0,x\right)\right),\\;\text{a linear and hard "Sigmoid" with continuous behavior around}\\;x=\\{0,1\\},
     \\\\\[1em\]
-    m\left(\mathbf{x},a_m,b_m,\mathbf{w},\mathbf{a},\mathbf{b}\right)&=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(a_m+b_m\times\left\[w_1\times \mathsf{Swish}(a_1+b_1\times F\_{X_1}(x_1))\\;+\\;\dots\\;+\\;w_n\times\mathsf{Swish}\left(a_n+b_n\times F\_{X_n}(x_n)\right)\right\]\right)\right),
+    m\left(\mathbf{x},b_m,a_m,\mathbf{w},\mathbf{a},\mathbf{b}\right)&=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(b_m+a_m\times\left\[w_1\times \mathsf{Swish}(b_1+a_1\times F\_{X_1}(x_1))\\;+\\;\dots\\;+\\;w_n\times\mathsf{Swish}\left(b_n+a_n\times F\_{X_n}(x_n)\right)\right\]\right)\right),
     \\\\\[0ex\]
-    &=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(a_m+b_m\times\left\[\sum\_{i=1}^N\\,w_i\times\mathsf{Swish}\left(a_i+b_i\times F\_{X_i}(x_i)\right)\right\]\right)\right),
+    &=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(b_m+a_m\times\left\[\sum\_{i=1}^N\\,w_i\times\mathsf{Swish}\left(b_i+a_i\times F\_{X_i}(x_i)\right)\right\]\right)\right),
     \\\\\[0ex\]
-    &=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(a_m+b_m\times\mathbf{w}^\top\mathbf{k}\right)\right),
+    &=\mathsf{PPF}\_{Y}\left(\mathsf{S}\_{\mathrm{hard}}\left(b_m+a_m\times\mathbf{w}^\top\mathbf{k}\right)\right),
     \\\\\[1em\]
-    &\qquad\quad\text{where}\\;k_i=\mathsf{Swish}\left(a_i+b_i\times F\_{X_i}\left(x_i\right)\right).
+    &\qquad\quad\text{where}\\;k_i=\mathsf{Swish}\left(b_i+a_i\times F\_{X_i}\left(x_i\right)\right).
 \end{aligned}
 $$
 
 Above model predicts the response $y$ for a single datum $\mathbf{x}$
 that has $1\dots n$ features. For when the model has multiple outputs,
 the model has one PPF per output, each with its own linear activation
-(model bias $a_{m_i}$ and -weight $b_{m_i}$):
+(model bias $b_{m_i}$ and -weight $a_{m_i}$):
 
 $$
 \begin{aligned}
