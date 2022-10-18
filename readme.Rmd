@@ -76,7 +76,7 @@ It is obvious that this model is somewhat similar to a **Generalized Linear Mode
 
 # Rank (Batch) Transformation For Deep Neural Networks
 
-Batch normalization is a technique used for suppressing what is called covariate shift, by z-standardizing the outputs of the previous layer [IoffeS15].
+Batch normalization is a technique used for suppressing what is called covariate shift, by z-standardizing the outputs of the previous layer [@IoffeS15].
 It has been shown that batch normalization results in faster convergence and more robust models.
 
 
