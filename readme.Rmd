@@ -73,6 +73,23 @@ It is obvious that this model is somewhat similar to a **Generalized Linear Mode
 * Since the link-function is a PPF, it has a domain of $[0,1]$. We therefore pass the result of the computation into a somewhat hardened Sigmoid, that, in actuality, is more like a ReLU with range $[0,1]$ and is continuously smooth in the neighborhoods of $x=\{0,1\}$ to enable smooth gradients (currently, we obtain a numeric gradient, so this is of great importance) [@Biswas_2022_CVPR]. Also, we pass the result with one last additional parameter, a "model-bias" $b_m$.
 
 
+
+# Rank (Batch) Transformation For Deep Neural Networks
+
+Batch normalization is a technique used for suppressing what is called covariate shift, by z-standardizing the outputs of the previous layer [IoffeS15].
+It has been shown that batch normalization results in faster convergence and more robust models.
+
+
+We have therefore also created a prototypal implementation of the Rank Transformation model as Keras layers [see folder __`./Python/`__](./Python).
+Some very early results indicate that Rank transformation works pretty well in neural networks. Often, convergence is faster and more robust than it is with batch normalization.
+However, I can currently see two ways of doing Rank transformation:
+
+1. Doing batch Rank transformation: Exactly like batch normalization is implemented. However, instead of z-standardization, we use the CDFs to make scores. This way, the layer can be intermittently and adaptively learns means and standard deviations. I only tried this briefly and while it works, it appears that the next way is better.
+2. Apply Rank transform only to the original inputs (using a dedicated input layer that takes *all* available training data and then remains constant during training of the network) and then do the inverse transform (applying the PPF to the target variable(s)) using another dedicated layer that will remain constant. My observations so far are that this method converges much more rapidly compared to batch normalization using much smaller model capacity (reductions of ca. $30-40$%) simultaneously. However, much more research required.
+
+
+
+
 # References {-}
 
 <div id="refs"></div>
