@@ -8,7 +8,7 @@ output:
     variant: gfm
 ---
 
-# Rank-Models for Robust Regression Below 200 Observations
+# Rank-Models for Robust Regression For (Significantly) Below 100 Observations
 
 The (current) purpose of this repository is to test some models and collect data about their performance, compared to existing state-of-the-art models.
 It appears that building robust regression models gets more difficult with fewer observations.
@@ -35,13 +35,13 @@ $$
 	\\[1ex]
 	\mathsf{S}_{\mathrm{hard}}(x)&=\min_{\mathrm{soft}}\left(1,\max_{\mathrm{soft}}\left(0,x\right)\right),\;\text{a linear and hard "Sigmoid" with continuous behavior around}\;x=\{0,1\},
 	\\[1em]
-	m\left(\mathbf{x},a_m,b_m,\mathbf{w},\mathbf{a},\mathbf{b}\right)&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\left[w_1\times \mathsf{Swish}(a_1+b_1\times F_{X_1}(x_1))\;+\;\dots\;+\;w_n\times\mathsf{Swish}\left(a_n+b_n\times F_{X_n}(x_n)\right)\right]\right)\right),
+	m\left(\mathbf{x},a_m,b_m,\mathbf{w},\mathbf{a},\mathbf{b}\right)&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(b_m+a_m\times\left[w_1\times \mathsf{Swish}(b_1+a_1\times F_{X_1}(x_1))\;+\;\dots\;+\;w_n\times\mathsf{Swish}\left(b_n+a_n\times F_{X_n}(x_n)\right)\right]\right)\right),
 	\\[0ex]
-	&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\left[\sum_{i=1}^N\,w_i\times\mathsf{Swish}\left(a_i+b_i\times F_{X_i}(x_i)\right)\right]\right)\right),
+	&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(b_m+a_m\times\left[\sum_{i=1}^N\,w_i\times\mathsf{Swish}\left(b_i+a_i\times F_{X_i}(x_i)\right)\right]\right)\right),
 	\\[0ex]
 	&=\mathsf{PPF}_{Y}\left(\mathsf{S}_{\mathrm{hard}}\left(a_m+b_m\times\mathbf{w}^\top\mathbf{k}\right)\right),
 	\\[1em]
-	&\qquad\quad\text{where}\;k_i=\mathsf{Swish}\left(a_i+b_i\times F_{X_i}\left(x_i\right)\right).
+	&\qquad\quad\text{where}\;k_i=\mathsf{Swish}\left(b_i+a_i\times F_{X_i}\left(x_i\right)\right).
 \end{aligned}
 $$
 
@@ -51,11 +51,11 @@ For when the model has multiple outputs, the model has one PPF per output, each 
 $$
 \begin{aligned}
 	m&=\begin{cases}
-		\mathsf{PPF}_{Y_1}\left(\mathsf{S}_{\mathrm{hard}}\left(a_{m_1}+b_{m_1}\times\mathbf{w}^\top\mathbf{k}\right)\right),
+		\mathsf{PPF}_{Y_1}\left(\mathsf{S}_{\mathrm{hard}}\left(b_{m_1}+a_{m_1}\times\mathbf{w}^\top\mathbf{k}\right)\right),
 		\\
 		\quad\vdots
 		\\
-		\mathsf{PPF}_{Y_n}\left(\mathsf{S}_{\mathrm{hard}}\left(a_{m_n}+b_{m_n}\times\mathbf{w}^\top\mathbf{k}\right)\right),
+		\mathsf{PPF}_{Y_n}\left(\mathsf{S}_{\mathrm{hard}}\left(b_{m_n}+a_{m_n}\times\mathbf{w}^\top\mathbf{k}\right)\right),
 	\end{cases}
 \end{aligned}
 $$
