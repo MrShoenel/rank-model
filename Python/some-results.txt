@@ -1,0 +1,19 @@
+epoch 2910: loss: 5.8594 - val_loss: 18.7818
+epoch 1877: loss: 8.3005 - val_loss: 21.9445
+epoch 1837: loss: 8.2546 - val_loss: 18.9226
+
+6.43 17.97
+
+
+normal, scaling, no batchnorm
+- 2980: 16.2 val: 26.6
+
+normal, scaling, +batchnorm
+- 195: 20.36, val: 31.98
+
+normal, only y-scaling, +batchnorm
+- 253: 19.99, val: 28.58
+
+
+
+19.75, 29.08

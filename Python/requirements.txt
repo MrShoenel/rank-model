@@ -1,0 +1,5 @@
+nptyping==2.3.1
+pip-chill==1.0.1
+sklearn==0.0
+tensorflow==2.10.0
+tensorflow-probability==0.18.0
