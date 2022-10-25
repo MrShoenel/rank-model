@@ -19,8 +19,10 @@ fit_cont_parametric <- function(data, test_distr = c("beta", "cauchy", "gamma", 
 	options(show.error.messages = FALSE)
 	for (distr in test_distr) {
 		result <- tryCatch(expr = {
-			suppressWarnings(expr = {
-				fitdistrplus::fitdist(data = data, distr = distr)
+			suppressMessages({
+				suppressWarnings(expr = {
+					fitdistrplus::fitdist(data = data, distr = distr)
+				})
 			})
 		}, error = function(cond) cond, finally = {
 			options(show.error.messages = e)
@@ -65,7 +67,7 @@ fit_cont_parametric <- function(data, test_distr = c("beta", "cauchy", "gamma", 
 	
 	to_dist_args <- function(x, use = c("x", "q", "p")) {
 		templ <- rlang::duplicate(x = best$dist_params)
-		templ[match.arg(arg = use)] <- x
+		templ[[match.arg(arg = use)]] <- x
 		templ
 	}
 	
