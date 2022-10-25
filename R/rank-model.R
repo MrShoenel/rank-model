@@ -11,8 +11,8 @@ hard_sigmoid <- function(x) smooth_min(1, smooth_max(0, x))
 
 sigmoid <- function(x) 1 / (1 + exp(-x))
 
-swish <- function(x) {
-	x / (1 + exp(-.25 * x))
+swish <- function(x, beta=0.25) {
+	x * sigmoid(beta * x)
 }
 
 make_safe_ppf <- function(ppf, x_min = 1e-220, x_max = 1-1e-16) {
@@ -51,7 +51,7 @@ make_smooth_ecdf <- function(values, slope = 0.025, inverse = FALSE) {
 }
 
 
-create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis", "ecdf", "smooth", "fit")) {
+create_model <- function(df_train, x_cols, y_col, cdf_type = c("auto", "gauss", "logis", "ecdf", "smooth", "fit")) {
 	df_train <- as.data.frame(df_train)
 	cdf_type <- match.arg(cdf_type)
 	
@@ -109,8 +109,7 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis",
 				"distr" = the_fit$distr,
 				"dist_params" = the_fit$dist_params,
 				"p_value" = the_fit$p_value,
-				"statistic" = the_fit$statistic
-			)
+				"statistic" = the_fit$statistic)
 			cdfs[[x_col]] <- the_fit$cdf
 		}
 		the_fit <- fit_cont_parametric(data = df_train[, y_col], over_scale = .1)
@@ -118,10 +117,35 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("gauss", "logis",
 			"distr" = the_fit$distr,
 			"dist_params" = the_fit$dist_params,
 			"p_value" = the_fit$p_value,
-			"statistic" = the_fit$statistic
-		)
+			"statistic" = the_fit$statistic)
 		ppf_ <- the_fit$ppf
 		ppf <- make_safe_ppf(ppf = ppf_)
+	} else if (cdf_type == "auto") {
+		# Try fit, then fall back to smooth ECDF.
+		for (x_col in x_cols) {
+			cdfs[[x_col]] <- tryCatch({
+				the_fit <- fit_cont_parametric(data = df_train[, x_col], over_scale = .1)
+				model_info$distr[[x_col]] <- list(
+					"distr" = the_fit$distr,
+					"dist_params" = the_fit$dist_params,
+					"p_value" = the_fit$p_value,
+					"statistic" = the_fit$statistic)
+				the_fit$cdf
+			}, error = function(cond) {
+				make_smooth_ecdf(values = df_train[, x_col])
+			})
+		}
+		ppf <- tryCatch({
+			the_fit <- fit_cont_parametric(data = df_train[, y_col], over_scale = .1)
+			model_info$distr[[y_col]] <- list(
+				"distr" = the_fit$distr,
+				"dist_params" = the_fit$dist_params,
+				"p_value" = the_fit$p_value,
+				"statistic" = the_fit$statistic)
+			the_fit$ppf
+		}, error = function(cond) {
+			make_smooth_ecdf(values = df_train[, y_col], inverse = TRUE)
+		})
 	}
 	
 	m <- function(x, df) {
