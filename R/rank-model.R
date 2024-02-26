@@ -51,7 +51,18 @@ make_smooth_ecdf <- function(values, slope = 0.025, inverse = FALSE) {
 }
 
 
-create_model <- function(df_train, x_cols, y_col, cdf_type = c("auto", "gauss", "logis", "ecdf", "smooth", "fit")) {
+invert_gauss_kde_cdf <- function(gauss_kde_cdf, data) {
+	r <- range(data)
+	d <- r[2] - r[1]
+	x <- seq(from = min(data), to = max(data), length.out = 3e3)
+	y <- c(0, gauss_kde_cdf(x), 1)
+	x <- c(r[1] - .1 * d, x, r[2] + .1 * d)
+	
+	stats::approxfun(x = y, y = x, yleft = min(x), yright = max(x))
+}
+
+
+create_model <- function(df_train, x_cols, y_col, cdf_type = c("auto", "gauss", "kdecdf", "logis", "ecdf", "smooth", "fit")) {
 	df_train <- as.data.frame(df_train)
 	cdf_type <- match.arg(cdf_type)
 	
@@ -69,6 +80,12 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("auto", "gauss", 
 		mean_ <- mean(data)
 		sd_ <- mean(data)
 		function(q) plogis(q = q, location = mean_, scale = sd_, log.p = FALSE)
+	}
+	
+	make_kde_gauss_cdf <- function(data) {
+		data <- as.vector(data) + 0.0
+		bw <- bw.SJ(data)
+		Vectorize(function(q) 1 / length(data) * sum(pnorm((q - data) / bw)))
 	}
 	
 	ppf <- NULL
@@ -91,6 +108,12 @@ create_model <- function(df_train, x_cols, y_col, cdf_type = c("auto", "gauss", 
 			p[p >= 1] <- 1-1e-16
 			qlogis(p = p, location = ppf_mean, scale = ppf_sd, log.p = FALSE)
 		}
+	} else if (cdf_type == "kdecdf") {
+		for (x_col in x_cols) {
+			cdfs[[x_col]] <- make_kde_gauss_cdf(data = df_train[, x_col])
+		}
+		ppf <- invert_gauss_kde_cdf(gauss_kde_cdf = make_kde_gauss_cdf(
+			data = df_train[, y_col]), data = df_train[, y_col])
 	} else if (cdf_type == "ecdf") {
 		for (x_col in x_cols) {
 			cdfs[[x_col]] <- stats::ecdf(x = df_train[, x_col])
