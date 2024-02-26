@@ -14,8 +14,10 @@ inverse CDF. This is very similar to generalized linear models. In fact,
 we are currently testing using a linear model. However, we also
 introduce non-linearity to allow the model to be fit to more difficult
 problems. For CDF and PPF, we currently support the Gaussian Kernel, an
-empirical Kernel, and a smoothed version thereof. It is conceivable, for
-example, to implement distribution fitting in the future.
+empirical Kernel, and a smoothed version thereof. ~~It is conceivable,
+for example, to implement distribution fitting in the future.~~ The
+fitting of some distributions was implemented now. Also, using a
+KDE-based CDF and smooth PPF-approximation thereof are now available.
 
 Currently, the model looks like this:
 
