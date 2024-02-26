@@ -91,7 +91,7 @@ result_parallel <- loadResultsOrCompute(file = "../results/rank_pred_parallel.rd
 ```
 
     ##  objective loss_train loss_valid 
-    ##   2.547292   2.442457   5.587985
+    ##   2.544714   2.437913   5.604367
 
 ``` r
 par(mfrow = c(1,2))
@@ -149,7 +149,7 @@ result_nloptr <- loadResultsOrCompute(file = "../results/rank_pred_nloptr.rds", 
 ```
 
     ##  objective loss_train loss_valid 
-    ##   2.612919   2.523960   5.382316
+    ##   2.605384   2.513955   5.458790
 
 ``` r
 par(mfrow = c(1,2))
@@ -168,7 +168,7 @@ par(mfrow = c(1,3))
 temp <- df_valid$PE - result_nloptr$pred
 plot(sort(temp))
 grid()
-boxplot(abs(temp))
+boxplot(temp)
 grid()
 plot(density(temp))
 grid()
@@ -204,7 +204,7 @@ points(pred_rf, col="red", pch=4)
 grid()
 
 temp <- df_valid$PE - pred_rf
-boxplot(abs(temp))
+boxplot(temp)
 grid()
 ```
 
@@ -237,7 +237,7 @@ points(pred_gbm, col="red", pch=4)
 grid()
 
 temp <- df_valid$PE - pred_gbm
-boxplot(abs(temp))
+boxplot(temp)
 grid()
 ```
 
@@ -265,7 +265,7 @@ points(pred_glm, col="red", pch=4)
 grid()
 
 temp <- df_valid$PE - pred_glm
-boxplot(abs(temp))
+boxplot(temp)
 grid()
 ```
 
@@ -294,7 +294,7 @@ bp_rf <- sqrt((df_valid$PE - pred_rf)^2)
 bp_gbm <- sqrt((df_valid$PE - pred_gbm)^2)
 bp_glm <- sqrt((df_valid$PE - pred_glm)^2)
 
-rq <- function(x) round(x = quantile(x, c(0, .25, .5, .75, 1)), digits = 5)
+rq <- function(x) round(x = quantile(x, c(0, .01, .1, .25, .5, .75, .9, .99, 1)), digits = 5)
 
 `rownames<-`(
     x = data.frame(
@@ -303,19 +303,27 @@ rq <- function(x) round(x = quantile(x, c(0, .25, .5, .75, 1)), digits = 5)
         rf = c(Metrics::rmse(actual = df_valid$PE, predicted = pred_rf), mean(bp_rf), rq(bp_rf)),
         gbm = c(Metrics::rmse(actual = df_valid$PE, predicted = pred_gbm), mean(bp_gbm), rq(bp_gbm)),
         glm = c(Metrics::rmse(actual = df_valid$PE, predicted = pred_glm), mean(bp_glm), rq(bp_glm))),
-    value = c("valid_rmse", "valid_se_mean", "valid_se_quant_0", "valid_se_quant_0.25", "valid_se_quant_0.5", "valid_se_quant_0.75", "valid_rmse_quant_1")
+    value = c("valid_rmse", "valid_se_mean", "valid_se_quant_0", "valid_se_quant_0.01", "valid_se_quant_0.1", "valid_se_quant_0.25", "valid_se_quant_0.5", "valid_se_quant_0.75", "valid_se_quant_0.9", "valid_se_quant_0.99", "valid_rmse_quant_1")
 )
 ```
 
+<div class="kable-table">
+
 |                     | rank_parallel | rank_nloptr |        rf |       gbm |       glm |
 |:--------------------|--------------:|------------:|----------:|----------:|----------:|
-| valid_rmse          |      5.587985 |    5.382316 |  8.471612 |  6.477212 |  9.135451 |
-| valid_se_mean       |      4.424365 |    4.205034 |  6.850995 |  5.062003 |  6.889872 |
-| valid_se_quant_0    |      0.001410 |    0.000790 |  0.005190 |  0.000860 |  0.000580 |
-| valid_se_quant_0.25 |      1.717610 |    1.589010 |  3.006480 |  2.006370 |  2.226710 |
-| valid_se_quant_0.5  |      3.647350 |    3.402140 |  5.994290 |  4.119950 |  5.167980 |
-| valid_se_quant_0.75 |      6.404760 |    6.017500 |  9.692720 |  7.142940 |  9.994510 |
-| valid_rmse_quant_1  |     24.349800 |   24.187040 | 28.753400 | 28.350380 | 34.371660 |
+| valid_rmse          |      5.604367 |    5.458790 |  8.471612 |  6.477212 |  9.135451 |
+| valid_se_mean       |      4.433152 |    4.264047 |  6.850995 |  5.062003 |  6.889872 |
+| valid_se_quant_0    |      0.002650 |    0.000670 |  0.005190 |  0.000860 |  0.000580 |
+| valid_se_quant_0.01 |      0.091210 |    0.059210 |  0.103210 |  0.076680 |  0.089110 |
+| valid_se_quant_0.1  |      0.701650 |    0.632440 |  1.160680 |  0.858340 |  0.961880 |
+| valid_se_quant_0.25 |      1.707140 |    1.608010 |  3.006480 |  2.006370 |  2.226710 |
+| valid_se_quant_0.5  |      3.671610 |    3.462460 |  5.994290 |  4.119950 |  5.167980 |
+| valid_se_quant_0.75 |      6.437980 |    6.114470 |  9.692720 |  7.142940 |  9.994510 |
+| valid_se_quant_0.9  |      9.203460 |    8.946130 | 13.691970 | 10.426800 | 15.774290 |
+| valid_se_quant_0.99 |     14.891580 |   14.471440 | 21.764370 | 18.353830 | 25.104580 |
+| valid_rmse_quant_1  |     24.393380 |   24.167140 | 28.753400 | 28.350380 | 34.371660 |
+
+</div>
 
 ``` r
 par(mfrow = c(1,5))
